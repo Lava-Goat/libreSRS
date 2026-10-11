@@ -1,0 +1,53 @@
+{
+  "name": "libresrs",
+  "version": "1.26.2",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "predev": "npm run build -w @libresrs/shared",
+    "dev": "concurrently \"npm run dev:shared\" \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:shared": "npm run dev -w @libresrs/shared",
+    "dev:server": "npm run dev -w @libresrs/server",
+    "dev:client": "npm run dev -w @libresrs/client",
+    "build": "npm run build -w @libresrs/shared && npm run build -w @libresrs/server && npm run build -w @libresrs/client",
+    "lint": "eslint packages/*/src --ext .ts,.tsx",
+    "typecheck": "npm run build -w @libresrs/shared && npm run typecheck -w @libresrs/server && npm run typecheck -w @libresrs/client",
+    "typecheck:core": "npm run build -w @libresrs/shared && tsc -p packages/server/tsconfig.core.json && tsc -p packages/client/tsconfig.core.json",
+    "db:generate": "npm run db:generate -w @libresrs/server",
+    "db:migrate": "npm run db:migrate -w @libresrs/server",
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "playwright test",
+    "test:e2e:chromium": "playwright test --project=chromium",
+    "test:e2e:desktop": "playwright test --project=chromium --project=firefox --project=webkit",
+    "test:e2e:mobile": "playwright test --project='mobile-*'",
+    "test:e2e:fullstack": "npm run build -w @libresrs/shared && playwright test -c playwright.fullstack.config.ts",
+    "test:e2e:fullstack:headed": "npm run build -w @libresrs/shared && playwright test -c playwright.fullstack.config.ts --headed",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:install": "playwright install",
+    "userscripts:stamp": "node scripts/stamp-userscripts.mjs",
+    "userscripts:publish": "node scripts/stamp-userscripts.mjs --publish",
+    "vendor:node": "./scripts/vendor-node-deps.sh",
+    "vendor:all": "./scripts/vendor-all.sh",
+    "install:offline": "./scripts/install-node-offline.sh"
+  },
+  "devDependencies": {
+    "@esbuild-kit/core-utils": "file:./patched-deps/esbuild-kit-core-utils",
+    "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.2.1",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "axe-core": "4.11.1",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.2",
+    "globals": "^17.3.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "typescript": "^5.9.3"
+  }
+}

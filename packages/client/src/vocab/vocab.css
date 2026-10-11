@@ -1,0 +1,138 @@
+/* (c) 2026 Jon-Erik G. Storm, Inc., a California Corporation, doing business as LAVA GOAT SOFTWARE */
+/* Vocabulómetro test UI, ported from the standalone single-file build (an earlier version of
+   tools/vocabulometro-offline/vocabulometro.html).
+   All rules are scoped under .vm-root so they cannot leak into the app. */
+
+.vm-root {
+  --vm-cardinal: #8c1d2f;
+  --vm-cardinal-bright: #b3273d;
+  --vm-cardinal-ink: #5e1420;
+  --vm-silver: #a7a8aa;
+  --vm-silver-soft: #d8d8da;
+  --vm-ink: #211d1e;
+  --vm-muted: #6e6866;
+  --vm-paper: #faf8f5;
+  --vm-card: #ffffff;
+  --vm-line: #e6e1da;
+  --vm-warn: #8c5a1d;
+  color: var(--vm-ink);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.dark .vm-root {
+  --vm-cardinal: #c4374e;
+  --vm-cardinal-bright: #d75a6e;
+  --vm-cardinal-ink: #e79aa6;
+  --vm-silver-soft: #4b4b50;
+  --vm-ink: #ece7e2;
+  --vm-muted: #a49d99;
+  --vm-paper: #17181b;
+  --vm-card: #24262b;
+  --vm-line: #3a3c42;
+  --vm-warn: #d9a75c;
+}
+
+.vm-root .hud {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  margin-bottom: 14px; font-family: ui-monospace, monospace; font-size: 12px; color: var(--vm-muted);
+}
+.vm-root .rail { height: 5px; background: var(--vm-silver-soft); border-radius: 3px; overflow: hidden; flex: 1; margin: 0 12px; }
+.vm-root .rail > i { display: block; height: 100%; background: var(--vm-cardinal); width: 0%; transition: width .2s; }
+
+.vm-root .stimulus {
+  background: var(--vm-card); border: 1px solid var(--vm-line); border-left: 6px solid var(--vm-cardinal);
+  border-radius: 10px; min-height: 220px; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 10px; padding: 28px 20px; text-align: center;
+}
+.vm-root .word { font-weight: 900; font-size: clamp(40px, 9vw, 72px); letter-spacing: -.015em; }
+.vm-root .word.gloss { font-size: clamp(22px, 4vw, 32px); }
+.vm-root .cue { font-family: ui-monospace, monospace; letter-spacing: .2em; font-size: 20px; color: var(--vm-muted); }
+.vm-root .prompt { color: var(--vm-muted); font-size: 14px; margin: 0; }
+
+.vm-root .answers { display: flex; gap: 12px; justify-content: center; margin-top: 18px; flex-wrap: wrap; align-items: center; }
+.vm-root button.ans {
+  font: inherit; font-weight: 700; padding: 16px 30px; border-radius: 9px;
+  border: 2px solid var(--vm-ink); background: var(--vm-card); color: var(--vm-ink); cursor: pointer;
+  min-width: 170px; font-size: 17px;
+}
+.vm-root button.ans.yes { background: var(--vm-cardinal); border-color: var(--vm-cardinal); color: #fff; }
+.vm-root button.ans:hover { transform: translateY(-1px); }
+.vm-root button.ans:active { transform: translateY(1px); }
+.vm-root button.ans:focus-visible, .vm-root button.opt:focus-visible, .vm-root button.play:focus-visible { outline: 3px solid var(--vm-cardinal-bright); outline-offset: 2px; }
+.vm-root .key { font-family: ui-monospace, monospace; font-size: 11px; opacity: .65; display: block; margin-top: 3px; font-weight: 400; }
+/* On the cardinal fill the faded hint falls to 3:1 in dark mode; full white keeps it readable in both themes. */
+.vm-root button.ans.yes .key { opacity: 1; }
+
+.vm-root .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+@media (max-width: 560px) { .vm-root .opts { grid-template-columns: 1fr; } }
+.vm-root button.opt {
+  font: inherit; text-align: left; padding: 14px 16px; border: 1.5px solid var(--vm-line);
+  border-radius: 9px; background: var(--vm-card); color: var(--vm-ink); cursor: pointer; font-size: 15px;
+}
+.vm-root button.opt:hover { border-color: var(--vm-cardinal); }
+.vm-root button.opt .k { font-family: ui-monospace, monospace; color: var(--vm-cardinal); font-weight: 600; margin-right: 8px; }
+.vm-root button.opt.skip { grid-column: 1 / -1; color: var(--vm-muted); text-align: center; border-style: dashed; }
+
+.vm-root button.play {
+  font: inherit; display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px;
+  padding: 16px 30px; border-radius: 999px; border: 2px solid var(--vm-cardinal);
+  background: var(--vm-cardinal); color: #fff; cursor: pointer;
+}
+.vm-root button.play[disabled] { background: var(--vm-silver-soft); border-color: var(--vm-silver-soft); color: var(--vm-muted); cursor: not-allowed; }
+.vm-root .plays { font-family: ui-monospace, monospace; font-size: 12px; color: var(--vm-muted); }
+
+.vm-root .typed-input {
+  font: inherit; font-size: 18px; text-align: center; max-width: 280px; width: 100%;
+  padding: 9px 11px; border: 1px solid var(--vm-line); border-radius: 7px;
+  background: var(--vm-card); color: var(--vm-ink);
+}
+.vm-root .typed-input:focus-visible { outline: 3px solid var(--vm-cardinal-bright); outline-offset: 1px; border-color: var(--vm-cardinal); }
+
+/* special-character keys: US keyboards cannot type á é í ó ú ü ñ, and ñ changes the score */
+.vm-root .vocab-charkeys { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+/* the C-test is one long scrolling form, so its row follows the student down the passage */
+.vm-root .vocab-charkeys.sticky {
+  position: sticky; bottom: 8px; z-index: 2; padding: 8px; margin-top: 14px;
+  background: var(--vm-card); border: 1px solid var(--vm-line); border-radius: 10px;
+}
+.vm-root button.ck {
+  font-family: ui-monospace, monospace; font-size: 17px; line-height: 1; min-width: 40px;
+  padding: 9px 12px; border: 1px solid var(--vm-line); border-radius: 6px;
+  background: var(--vm-card); color: var(--vm-ink); cursor: pointer;
+}
+.vm-root button.ck:hover { border-color: var(--vm-cardinal); }
+.vm-root button.ck:focus-visible { outline: 3px solid var(--vm-cardinal-bright); outline-offset: 2px; }
+.vm-root button.ck[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* results */
+.vm-root .eyebrow {
+  font-weight: 800; letter-spacing: .18em; font-size: 11px; color: var(--vm-cardinal); text-transform: uppercase;
+}
+/* The dark cardinal is only 3.4:1 on the dark card at 11px; the bright one reaches 4.7:1. */
+.dark .vm-root .eyebrow { color: var(--vm-cardinal-bright); }
+.vm-root .res-head { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-end; margin: 8px 0; }
+.vm-root .stat .n { font-weight: 900; font-size: clamp(34px, 6vw, 52px); line-height: 1; }
+.vm-root .stat .n small { font-size: .42em; color: var(--vm-muted); font-weight: 700; }
+.vm-root .stat .l { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--vm-muted); font-weight: 600; margin-top: 4px; }
+.vm-root .ci { font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--vm-muted); }
+.vm-root .meter { margin: 22px 0 6px; }
+.vm-root .meter svg { width: 100%; height: auto; display: block; }
+.vm-root .meter .cap { display: flex; justify-content: space-between; font-family: ui-monospace, monospace; font-size: 11px; color: var(--vm-muted); margin-top: 4px; }
+.vm-root table.vm-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+.vm-root table.vm-table th {
+  font-family: ui-monospace, monospace; font-weight: 600; font-size: 11px; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--vm-muted); text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--vm-ink);
+}
+.vm-root table.vm-table td { padding: 8px 10px; border-bottom: 1px solid var(--vm-line); }
+.vm-root table.vm-table td.num, .vm-root table.vm-table th.num { text-align: right; font-family: ui-monospace, monospace; }
+/* Six columns are wider than a phone: the table scrolls inside its box, not the whole page sideways. */
+.vm-root .vm-table-scroll { overflow-x: auto; }
+.vm-root .note { font-size: 13px; color: var(--vm-muted); margin-top: 14px; }
+.vm-root .flag {
+  background: #fbf3e4; border: 1px solid #e8d5ac; border-radius: 8px; padding: 10px 14px;
+  font-size: 13.5px; color: var(--vm-warn); margin-top: 14px;
+}
+.dark .vm-root .flag { background: rgba(217, 167, 92, 0.12); border-color: rgba(217, 167, 92, 0.4); }
+
+@media (prefers-reduced-motion: reduce) { .vm-root * { transition: none !important; } }

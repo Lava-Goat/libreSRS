@@ -1,0 +1,12 @@
+-- v1.21.0: tests get their own page, apart from labs and speaking (they link to the same interface for
+-- now). Exam labs (0043) already carry their set; this gives speaking tasks one:
+--  * speaking_tasks.exam_set: NULL is a practice task. That is every existing task, including one already
+--    named like a test, until the teacher sets one. A name ("U2") makes the task a speaking test
+--    of that exam set. The name is stored canonical (shared canonicalExamSet), in the spelling the set
+--    already has on a lab, a lab start or another task, so "u2 " joins "U2". A speaking test is listed on
+--    the Tests page with its set's listening forms, not on the Speaking page. It records exactly like a
+--    practice task: no start limit, the same 10 takes, the same review and grading.
+-- No index: the table holds a few dozen rows, and only the set-name lookup reads the column.
+-- Rolling back to v1.20.x ignores the column: speaking tests show on the Speaking page again as ordinary
+-- tasks, and exam labs go back to the Labs page's Tests section. Nothing to do before a rollback.
+ALTER TABLE `speaking_tasks` ADD `exam_set` text;

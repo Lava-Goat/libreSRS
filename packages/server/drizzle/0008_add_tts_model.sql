@@ -1,0 +1,1 @@
+ALTER TABLE `app_settings` ADD `ai_tts_model` text DEFAULT 'gpt-4o-mini-tts-2025-12-15' NOT NULL;

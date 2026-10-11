@@ -1,0 +1,177 @@
+# libreSRS with a jonerix-based runtime — permissive-licence-only
+# production image.
+#
+# What this image is NOT: a 100% no-Alpine build. The client bundle
+# is produced by Vite, which pulls in regex property escapes (e.g.
+# `\p{Surrogate}`) that require Node to be built against ICU. The
+# x86_64 nodejs jpkg is currently built --without-intl, so running
+# Vite inside jonerix:minimal-amd64 crashes at build time. We therefore
+# keep node:24-alpine as the BUILD environment (GPL-adjacent bits
+# are thrown away after the build completes) and ship the RUNTIME
+# on jonerix:minimal where every binary is MIT / Apache-2.0 / BSD /
+# ISC / 0BSD / MirOS.
+#
+# Arch: x86_64 only. The runtime is the amd64 build of jonerix:minimal.
+
+# The jonerix runtime comes from GitHub's container registry (ghcr.io, public, no login), pinned
+# by digest: the minimal-amd64 tag keeps moving, and every build should get the same tested base
+# (published 2026-06-25). To move to a newer jonerix,
+# change the digest here and in Dockerfile.valkey.jonerix, and test it; --build-arg JONERIX_IMAGE=...
+# tries another one without an edit.
+ARG JONERIX_IMAGE=ghcr.io/stormj-uh/jonerix:minimal-amd64@sha256:c3736f96733f4543124d50f588d6333325dcb7a2067f97527d7032ff2ac2cb22
+ARG GIT_COMMIT=unknown
+ARG GIT_TAG=
+ARG USE_VENDORED_ASSETS=false
+
+# ============================================================
+# Stage 1: builder — standard node:24-alpine (build-time only)
+# ============================================================
+# The build stage's output (compiled JS, the client bundle, migrations) is the same on any
+# architecture, so it runs on the builder's own: native on an arm64 machine that builds the amd64
+# image under emulation (for example a Mac through Rosetta), without emulating tsc and vite. The
+# native SQLite module comes from proddeps, which is built for the target.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
+
+ARG GIT_COMMIT
+ARG GIT_TAG
+ARG USE_VENDORED_ASSETS
+ENV GIT_COMMIT=$GIT_COMMIT
+ENV GIT_TAG=$GIT_TAG
+
+WORKDIR /app
+# python3/make/g++: better-sqlite3's binding.gyp always runs node-gyp configure
+# (it no-ops the compile when its bundled prebuild exists, but configure still
+# needs Python + a toolchain).
+RUN apk add --no-cache bash jq python3 make g++
+
+COPY package*.json ./
+COPY patched-deps ./patched-deps
+COPY vendor/npm-cache ./vendor/npm-cache
+COPY packages/shared/package*.json ./packages/shared/
+COPY packages/server/package*.json ./packages/server/
+COPY packages/client/package*.json ./packages/client/
+
+RUN if [ "$USE_VENDORED_ASSETS" = "true" ]; then \
+      npm ci --offline --cache ./vendor/npm-cache; \
+    else \
+      npm ci; \
+    fi
+
+COPY tsconfig.base.json ./
+COPY scripts ./scripts
+COPY packages/shared ./packages/shared
+COPY packages/server ./packages/server
+COPY packages/client ./packages/client
+
+RUN find packages -name "*.tsbuildinfo" -delete && \
+    npm run build -w @libresrs/shared && \
+    npm run build -w @libresrs/server && \
+    npm run build -w @libresrs/client
+
+# ============================================================
+# Stage 2: proddeps — production node_modules for the jonerix
+# runtime. better-sqlite3 v13 ships PREBUILT binaries in its npm
+# tarball (prebuilds/linuxmusl-x64.node), and its V8 ABI must match
+# the runtime Node major: jonerix nodejs 24.x → node:24-alpine, both
+# musl. The prebuild means nothing is compiled, but npm still runs
+# node-gyp configure, so this stage needs python3/make/g++ (thrown
+# away with the stage).
+# ============================================================
+FROM node:24-alpine AS proddeps
+
+ARG USE_VENDORED_ASSETS
+
+WORKDIR /app
+# See builder note: node-gyp configure runs even when the prebuild no-ops the compile.
+RUN apk add --no-cache python3 make g++
+
+COPY package*.json ./
+COPY patched-deps ./patched-deps
+COPY vendor/npm-cache ./vendor/npm-cache
+COPY packages/shared/package*.json ./packages/shared/
+COPY packages/server/package*.json ./packages/server/
+
+RUN if [ "$USE_VENDORED_ASSETS" = "true" ]; then \
+      npm ci --offline --omit=dev --cache ./vendor/npm-cache; \
+    else \
+      npm ci --omit=dev; \
+    fi
+# Ensure the nested workspace dirs exist so the production COPYs never fail.
+RUN mkdir -p packages/server/node_modules packages/shared/node_modules
+
+# ============================================================
+# Stage 3: production — jonerix runtime, deps copied from
+# proddeps (same musl ABI, same Node major)
+# ============================================================
+FROM ${JONERIX_IMAGE} AS production
+
+# GIT_COMMIT thread-through busts the jpkg install docker layer
+# cache whenever the source commit changes — otherwise a layer
+# from a deploy predating nodejs-r3's INDEX landing keeps being
+# reused and the container boots on stale node.
+ARG GIT_COMMIT=unknown
+ARG USE_VENDORED_ASSETS=false
+ENV GIT_COMMIT=$GIT_COMMIT
+
+WORKDIR /app
+
+# Runtime: Node plus the tools the server shells out to for Anki
+# (.apkg) import parsing. sqlite = libsqlite3 tooling, zstd for
+# the inner data. The `unzip` jpkg metadata advertises an
+# x86_64 package but the artefact is currently a 404 on the
+# release server; libarchive ships `/bin/bsdunzip` (Apache-2.0),
+# which is command-line-compatible with Info-ZIP's unzip for the
+# flags the server uses, so we expose it at /bin/unzip instead.
+# jonerix:minimal is stripped further than jonerix:core, so
+# libarchive is pulled in explicitly here.
+RUN jpkg update && \
+    jpkg install --force nodejs sqlite zstd libarchive libcxx && \
+    ln -sf /bin/bsdunzip /bin/unzip && \
+    ln -sf /bin/bsdunzip /usr/bin/unzip && \
+    # Prebuilt npm native modules (better-sqlite3's musl prebuild) are linked
+    # against Alpine's libgcc_s for stack unwinding. jonerix builds with
+    # LLVM compiler-rt and ships libunwind instead, so satisfy the SONAME
+    # via the same compat symlink the WSL rootfs uses. (The COPY of the
+    # real libgcc_s.so.1 below replaces this symlink.)
+    ln -sf libunwind.so.1 /lib/libgcc_s.so.1 && \
+    ln -sf libunwind.so.1 /usr/lib/libgcc_s.so.1
+
+# Production deps come from the proddeps stage (same musl, same Node
+# major — required for better-sqlite3's V8-ABI native module). The
+# workspace package.json files are still copied so npm's workspace
+# symlinks inside node_modules resolve to real packages here.
+COPY package*.json ./
+COPY patched-deps ./patched-deps
+COPY packages/shared/package*.json ./packages/shared/
+COPY packages/server/package*.json ./packages/server/
+COPY --from=proddeps /app/node_modules ./node_modules
+COPY --from=proddeps /app/packages/server/node_modules ./packages/server/node_modules
+COPY --from=proddeps /app/packages/shared/node_modules ./packages/shared/node_modules
+
+# better-sqlite3's musl prebuild dynamically links the GNU C++ runtime, which
+# jonerix (libc++-based) does not ship. Copy the two shared libraries from the
+# alpine stage (same musl libc). Redistribution is permissive-compatible via
+# the GCC Runtime Library Exception. The COPY of the real libgcc_s.so.1 also
+# replaces the libunwind compat symlink created above.
+COPY --from=proddeps /usr/lib/libstdc++.so.6 /usr/lib/
+COPY --from=proddeps /usr/lib/libgcc_s.so.1 /usr/lib/
+
+# Built artefacts.
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/packages/server/dist ./packages/server/dist
+COPY --from=builder /app/packages/server/drizzle ./packages/server/drizzle
+COPY --from=builder /app/packages/client/dist ./packages/server/public
+COPY README.md logo.svg ./
+
+RUN mkdir -p /app/data
+
+# Fail the build (not the boot) if the native SQLite driver cannot load and
+# run on THIS runtime (ABI/linkage mismatches surface right here).
+RUN node -e "const d=require('better-sqlite3')(':memory:'); if(d.prepare('select 1 as x').get().x!==1) throw new Error('driver smoke failed'); console.log('better-sqlite3 OK')"
+
+ENV NODE_ENV=production
+ENV DATABASE_URL=/app/data/flashcards.db
+ENV PORT=6767
+
+EXPOSE 6767
+CMD ["node", "packages/server/dist/index.js"]

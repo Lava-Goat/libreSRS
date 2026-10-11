@@ -1,0 +1,356 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1770314076290,
+      "tag": "0000_useful_landau",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1770323165614,
+      "tag": "0001_rich_stranger",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1770400000000,
+      "tag": "0002_add_ai_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1770500000000,
+      "tag": "0003_add_speech_accent",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1770600000000,
+      "tag": "0004_add_per_side_accents",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1770700000000,
+      "tag": "0005_add_locale_setting",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1770800000000,
+      "tag": "0006_add_app_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1770900000000,
+      "tag": "0007_add_group_lookup_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1771386306802,
+      "tag": "0008_add_tts_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1771387000000,
+      "tag": "0009_add_card_cognate_score",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1771449000000,
+      "tag": "0010_add_cognate_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1772000000000,
+      "tag": "0011_add_auto_play_audio",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1772100000000,
+      "tag": "0012_add_auto_play_front",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1772200000000,
+      "tag": "0013_mnemonic_mode_and_deck_ai_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1772300000000,
+      "tag": "0014_add_decks_created_by_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1772400000000,
+      "tag": "0015_admin_settings_lock",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1772500000000,
+      "tag": "0016_group_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1772600000000,
+      "tag": "0017_add_show_cognate_score",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1772700000000,
+      "tag": "0018_clever_credentials",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1774145769514,
+      "tag": "0019_parched_deathstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1779256123874,
+      "tag": "0020_puzzling_catseye",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1783225613496,
+      "tag": "0021_gigantic_lilith",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1783228234661,
+      "tag": "0022_quiet_korath",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1783230463800,
+      "tag": "0023_daily_silver_sable",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1783232906751,
+      "tag": "0024_majestic_fixer",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1783267824530,
+      "tag": "0025_free_blazing_skull",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1784105550112,
+      "tag": "0026_worthless_shinobi_shaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1787332623656,
+      "tag": "0027_parched_madrox",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1788770149052,
+      "tag": "0028_per_side_audio",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1790140563441,
+      "tag": "0029_study_completions",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1790141099399,
+      "tag": "0030_labs",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1790141159399,
+      "tag": "0031_card_mnemonics",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1790141219399,
+      "tag": "0032_speaking",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1790141279399,
+      "tag": "0033_signups",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1790141339399,
+      "tag": "0034_conjugation",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "6",
+      "when": 1790141399399,
+      "tag": "0035_vocab_voice",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1790141459399,
+      "tag": "0036_conjugation_review",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1790141519399,
+      "tag": "0037_student_numbers",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "6",
+      "when": 1790141579399,
+      "tag": "0038_reserved",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "6",
+      "when": 1790141639399,
+      "tag": "0039_lab_pauses",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "6",
+      "when": 1790141699399,
+      "tag": "0040_sim115_checks",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1790141759399,
+      "tag": "0041_reserved",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "6",
+      "when": 1790141819399,
+      "tag": "0042_study_all",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "6",
+      "when": 1790141879399,
+      "tag": "0043_exam_labs",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "6",
+      "when": 1790141939399,
+      "tag": "0044_anthropic_key",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "6",
+      "when": 1790141999399,
+      "tag": "0045_tests_tab",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "6",
+      "when": 1790142059399,
+      "tag": "0046_pin_login",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "6",
+      "when": 1790142119399,
+      "tag": "0047_subject_shown",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1790142179399,
+      "tag": "0048_conjugation_sentences",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "6",
+      "when": 1790142239399,
+      "tag": "0049_transcription_switch",
+      "breakpoints": true
+    }
+  ]
+}

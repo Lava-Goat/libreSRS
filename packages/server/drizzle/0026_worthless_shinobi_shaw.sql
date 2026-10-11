@@ -1,0 +1,1 @@
+ALTER TABLE `app_settings` ADD `openai_base_url` text DEFAULT 'https://api.openai.com/v1' NOT NULL;

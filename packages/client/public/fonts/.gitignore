@@ -1,0 +1,9 @@
+# Proprietary font binaries (do not commit)
+*.woff
+*.woff2
+*.ttf
+*.otf
+
+# OS noise
+.DS_Store
+

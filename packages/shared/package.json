@@ -1,0 +1,59 @@
+{
+  "name": "@libresrs/shared",
+  "version": "1.26.2",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js",
+      "default": "./dist/types.js"
+    },
+    "./fsrs": {
+      "types": "./dist/fsrs.d.ts",
+      "import": "./dist/fsrs.js",
+      "default": "./dist/fsrs.js"
+    },
+    "./conjugation": {
+      "types": "./dist/conjugation/index.d.ts",
+      "import": "./dist/conjugation/index.js",
+      "default": "./dist/conjugation/index.js"
+    },
+    "./conjugation/sentences": {
+      "types": "./dist/conjugation/sentences/index.d.ts",
+      "import": "./dist/conjugation/sentences/index.js",
+      "default": "./dist/conjugation/sentences/index.js"
+    },
+    "./conjugation/sentences/testUnits": {
+      "types": "./dist/conjugation/sentences/testUnits.d.ts",
+      "import": "./dist/conjugation/sentences/testUnits.js",
+      "default": "./dist/conjugation/sentences/testUnits.js"
+    },
+    "./extensions/*": {
+      "types": "./dist/extensions/*/index.d.ts",
+      "import": "./dist/extensions/*/index.js",
+      "default": "./dist/extensions/*/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ts-fsrs": "^5.2.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

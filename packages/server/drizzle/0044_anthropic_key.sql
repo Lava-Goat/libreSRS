@@ -1,0 +1,54 @@
+-- v1.20.0: Claude (Anthropic) can write mnemonic suggestions. Columns only; no data changes:
+--  * anthropic_api_key: the Anthropic API key, stored encrypted (enc:v1 under
+--    APP_SETTINGS_ENCRYPTION_KEY or SESSION_SECRET, like openai_api_key and elevenlabs_api_key).
+--    NULL until the teacher pastes one in Admin > AI; an ANTHROPIC_API_KEY env var only seeds a new
+--    database, never an existing row.
+--  * ai_text_provider: who writes mnemonic suggestions, 'openai' | 'anthropic' (checked by the
+--    router; plain text like ai_tts_provider). Every existing row reads 'openai', so nothing
+--    changes until the teacher switches. Images, speech, transcription and moderation never move.
+--  * ai_anthropic_mnemonic_model: the Claude model used while ai_text_provider is 'anthropic'. It is
+--    separate from ai_mnemonic_model, so the OpenAI choice stays saved and
+--    comes back on a switch back.
+-- Rolling back to v1.19.0 ignores all three columns: mnemonics go back to the OpenAI model, and a
+-- saved key stays encrypted in the row for the next upgrade.
+--
+-- v1.20.0 also keeps every mnemonic suggestion, so "Try another" can tell the model what it already
+-- wrote. Two nullable columns on ai_mnemonics; existing rows are not changed:
+--  * rejected_at: when the teacher turned the suggestion down ("Try another", "Dismiss", or
+--    deleting the card's approved mnemonic). Before v1.20.0 a rejection deleted
+--    the row. A rejected row is never shown as pending again. NULL on every existing row.
+--  * style: 'keyword' (a sound-alike word in one picture with the meaning) or 'sentence' (a short
+--    example sentence), checked by the router like ai_text_provider. NULL on existing rows, which
+--    read as 'keyword'.
+-- Rolling back to v1.19.0 ignores both columns, with one visible effect: v1.19.0 shows the teacher's
+-- newest unapproved suggestion for a card, and that may now be one rejected under v1.20.0 (the
+-- teacher rejects it again). Students never see suggestions, so nothing changes for them.
+--
+-- v1.20.0 also removes the cognate system. Its columns are deprecated, not dropped (no DDL here):
+-- nothing reads or writes them any more, and a rollback to v1.19.0 finds every one in place (cards
+-- added meanwhile have no cognate score, and settings saved meanwhile say 'manual').
+--  * cards.cognate_score
+--  * card_ai_state, the whole table (cognate_score, false_friend_dismissed and three flags nothing read)
+--  * user_settings.show_cognate_score, show_cognate_score_locked
+--  * group_settings.show_cognate_score, show_cognate_score_locked
+--  * deck_user_settings.show_cognate_score
+--  * app_settings.ai_cognate_enabled, ai_cognate_model
+--  * the mnemonic_mode value 'auto-non-cognate' (user_settings, group_settings, deck_user_settings):
+--    read as 'manual' and never written; still the SQL default of user_settings and group_settings
+-- drizzle/DEPRECATED.md has the SQL that drops them in a later migration.
+--
+-- A database that ran a pre-release build of v1.19.0, in which this file was 0043_anthropic_key,
+-- cannot be upgraded as it is. That file had the same journal time as the released 0043_exam_labs;
+-- drizzle compares only that time, so it skips 0043_exam_labs (no lab_exam_starts table, no
+-- exam_set columns) and then fails here on "duplicate column name: anthropic_api_key", which stops
+-- boot. Released databases never ran it, and every e2e-fullstack run starts from an empty
+-- database. For a test database that did: throw it away or restore its pre-release backup; or by
+-- hand, delete the 0043_anthropic_key row (created_at 1790141879399) from __drizzle_migrations
+-- and drop the app_settings columns that file added (anthropic_api_key, ai_text_provider,
+-- ai_anthropic_mnemonic_model, and on the earliest pre-release also ai_anthropic_cognate_model),
+-- so that 0043_exam_labs and this file both run.
+ALTER TABLE `app_settings` ADD `anthropic_api_key` text;--> statement-breakpoint
+ALTER TABLE `app_settings` ADD `ai_text_provider` text DEFAULT 'openai' NOT NULL;--> statement-breakpoint
+ALTER TABLE `app_settings` ADD `ai_anthropic_mnemonic_model` text DEFAULT 'claude-opus-5-5' NOT NULL;--> statement-breakpoint
+ALTER TABLE `ai_mnemonics` ADD `rejected_at` integer;--> statement-breakpoint
+ALTER TABLE `ai_mnemonics` ADD `style` text;

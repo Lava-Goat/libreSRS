@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+packages/*/dist/
+*.tsbuildinfo
+
+# Data
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+playwright-report/
+test-results/
+
+# Drizzle
+drizzle/
+!packages/server/drizzle/
+!packages/server/drizzle/**
+# Worktree-specific files (generated per worktree)
+.env.worktree
+
+# Vendored npm cache: too large for GitHub, and not ours to redistribute
+# (scripts/vendor-node-deps.sh rebuilds it).
+# vendor/npm-cache/_update-notifier-last-checked stays tracked: Dockerfile.jonerix copies the folder.
+vendor/npm-cache/_cacache/
+
+# Production-only compose override (logging and other host settings), passed with -f
+docker-compose.host.yml

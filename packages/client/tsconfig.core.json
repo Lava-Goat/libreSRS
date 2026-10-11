@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@libresrs/server-extensions": ["../server/src/extensions/none.ts"],
+      "@libresrs/client-extensions": ["./src/extensions/none.tsx"]
+    }
+  },
+  "exclude": ["src/extensions/*/**", "src/extensions/enabled.tsx"]
+}

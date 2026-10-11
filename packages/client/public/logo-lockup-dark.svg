@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 256" role="img" aria-label="libreSRS">
+  <!-- The icon and the name, for headers (dark pages). -->
+  <rect x="16" y="16" width="224" height="224" rx="56" fill="#312e81"/>
+  <path fill="#fbbf24" d="M40 200 V148 Q46 182 76 184 V108 Q86 150 132 152 V60 Q147 106 216 108 V200 Z"/>
+  <text x="276" y="172" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="124" font-weight="700" textLength="492" lengthAdjust="spacingAndGlyphs" fill="#eef2ff">libre<tspan fill="#fbbf24">SRS</tspan></text>
+</svg>

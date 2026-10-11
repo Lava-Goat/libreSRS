@@ -1,0 +1,20 @@
+CREATE TABLE `group_settings` (
+	`group_id` integer PRIMARY KEY NOT NULL REFERENCES `groups`(`id`) ON DELETE CASCADE,
+	`new_cards_per_day` integer NOT NULL DEFAULT 20,
+	`reviews_per_day` integer NOT NULL DEFAULT 20,
+	`is_override` integer NOT NULL DEFAULT 0,
+	`allow_higher` integer NOT NULL DEFAULT 1,
+	`allow_lower` integer NOT NULL DEFAULT 1,
+	`ai_enabled` integer NOT NULL DEFAULT 1,
+	`ai_enabled_locked` integer NOT NULL DEFAULT 0,
+	`auto_play_audio` integer NOT NULL DEFAULT 0,
+	`auto_play_audio_locked` integer NOT NULL DEFAULT 0,
+	`auto_play_audio_front` integer NOT NULL DEFAULT 0,
+	`auto_play_audio_front_locked` integer NOT NULL DEFAULT 0,
+	`mnemonic_mode` text NOT NULL DEFAULT 'auto-non-cognate',
+	`mnemonic_mode_locked` integer NOT NULL DEFAULT 0,
+	`locale` text,
+	`locale_locked` integer NOT NULL DEFAULT 0,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL
+);

@@ -1,0 +1,1 @@
+CREATE INDEX `idx_review_logs_card_user` ON `review_logs` (`user_id`,`card_id`);

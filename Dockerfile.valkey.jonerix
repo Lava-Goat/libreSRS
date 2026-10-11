@@ -1,0 +1,34 @@
+# Valkey sidecar built on jonerix:minimal. Wire-compatible drop-in
+# for the previous redis:7-alpine container; the app still talks to
+# it over the redis protocol on port 6379 via REDIS_URL.
+#
+# Why this exists: the libreSRS jonerix variant ships a permissive
+# (BSD/MIT/Apache-2.0/ISC/0BSD/MirOS) runtime. Redis 7 is RSALv2 /
+# SSPLv1, so it doesn't belong in that image set. Valkey is the
+# BSD-3-Clause fork the Linux Foundation took stewardship of and
+# is the jonerix-blessed replacement.
+#
+# Arch: x86_64 only — matches Dockerfile.jonerix.
+#
+# Pinned by digest to the same jonerix runtime as Dockerfile.jonerix (see there), pulled from
+# GitHub's container registry. Change both together.
+ARG JONERIX_IMAGE=ghcr.io/stormj-uh/jonerix:minimal-amd64@sha256:c3736f96733f4543124d50f588d6333325dcb7a2067f97527d7032ff2ac2cb22
+FROM ${JONERIX_IMAGE}
+
+# valkey's runtime deps per its jpkg metadata are musl + libressl.
+# Both should already be in :minimal but we install them explicitly
+# so the layer is reproducible if the base image tag drifts. The
+# install is pinned with --force so an older cached package is
+# overwritten if the index has shipped a newer build.
+RUN jpkg update && \
+    jpkg install --force valkey musl libressl
+
+# valkey-server listens on 6379 by default. Bind 0.0.0.0 so the
+# libreSRS app container can reach it over the user-defined docker
+# network. No config file and no volume: valkey holds only the sessions,
+# so nothing is lost but sign-ins. Recreating the container signs
+# everyone out (deploys recreate the app alone). Whether a plain restart
+# keeps them depends on valkey's default snapshots, which stay in the
+# container's own filesystem.
+EXPOSE 6379
+CMD ["/bin/valkey-server", "--bind", "0.0.0.0", "--protected-mode", "no"]

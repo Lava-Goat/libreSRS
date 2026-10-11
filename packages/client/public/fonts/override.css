@@ -1,0 +1,49 @@
+/*
+  Font overrides (optional).
+
+  This file is loaded by the client at runtime (after the bundled CSS).
+  Drop your local/proprietary font binaries into this folder and define
+  @font-face rules + Tailwind font variables here.
+
+  Tailwind v4 uses these variables:
+    --font-sans, --font-serif, --font-mono
+
+  Example (JohnSans Text Pro):
+
+    @font-face {
+      font-family: "JohnSans Text Pro";
+      src: url("/fonts/JohnSansText.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "JohnSans Text Pro";
+      src: url("/fonts/JohnSansTextItalic.woff2") format("woff2");
+      font-weight: 400;
+      font-style: italic;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "JohnSans Text Pro";
+      src: url("/fonts/JohnSansTextBold.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "JohnSans Text Pro";
+      src: url("/fonts/JohnSansTextBoldItalic.woff2") format("woff2");
+      font-weight: 700;
+      font-style: italic;
+      font-display: swap;
+    }
+
+    :root {
+      --font-sans: "JohnSans Text Pro", ui-sans-serif, system-ui, sans-serif;
+    }
+*/
+

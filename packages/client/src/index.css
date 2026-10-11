@@ -1,0 +1,59 @@
+@import "tailwindcss";
+@source "../index.html";
+@source "./**/*.{js,jsx,ts,tsx}";
+@plugin "@tailwindcss/typography";
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  background-color: rgb(249 250 251);
+  color: rgb(17 24 39);
+}
+
+html.dark body {
+  background-color: rgb(17 24 39);
+  color: rgb(243 244 246);
+}
+
+.card-content {
+  max-width: none;
+}
+
+.card-content b,
+.card-content strong {
+  font-weight: 700;
+}
+
+.card-content i,
+.card-content em {
+  font-style: italic;
+}
+
+.card-content u {
+  text-decoration: underline;
+}
+
+.card-content img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 32rem);
+  max-height: 18rem;
+  margin: 0.75rem auto;
+  object-fit: contain;
+}
+
+.card-content audio {
+  display: block;
+  width: min(100%, 28rem);
+  margin: 0.75rem auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

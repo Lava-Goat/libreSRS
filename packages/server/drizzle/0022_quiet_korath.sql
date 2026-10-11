@@ -1,0 +1,1 @@
+ALTER TABLE `vocab_results` ADD `quality_json` text;

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>libreSRS</title>
+    <!-- ?v= is the logo's stamp (src/brand.ts): new URLs get past a proxy's browser cache. -->
+    <link rel="icon" href="/favicon.ico?v=20261010" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261010" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=20261010" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20261010" />
+    <link rel="manifest" href="/site.webmanifest?v=20261010" />
+    <meta name="theme-color" content="#312e81" />
+  </head>
+  <body>
+    <script>
+      // Prevent flash of wrong theme by applying dark class before render
+      (function() {
+        var theme = localStorage.getItem('libresrs.theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

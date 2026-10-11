@@ -1,0 +1,98 @@
+# libreSRS jonerix variant — permissive-licence-only production stack.
+#
+# The app runtime is ghcr.io/stormj-uh/jonerix:minimal-amd64, pinned by
+# digest in the Dockerfiles (x86_64 only, built via Dockerfile.jonerix) and the redis dependency is
+# replaced by valkey (Dockerfile.valkey.jonerix) — the BSD-3-Clause fork
+# the Linux Foundation stewards. Wire-compatible: the app still speaks
+# the redis protocol on 6379, so REDIS_URL just points at the valkey
+# service over the compose network.
+#
+# This is the production stack. Pass the project name with -p so the
+# container and network names are the same on every host.
+#
+# The app container sees only the variables listed under app.environment
+# below. To use any other variable from .env.example, add it there.
+#
+# Production never builds the app: the image is built elsewhere, loaded on
+# the server, and swapped in with
+#
+#   docker compose -p libresrs-jonerix -f docker-compose.jonerix.yml up -d --no-deps --no-build app
+#
+# (the app only: recreating valkey signs everyone out). For a local build:
+#
+#   GIT_COMMIT=$(git rev-parse --short HEAD) \
+#     docker compose -p libresrs-jonerix -f docker-compose.jonerix.yml up -d --build
+#
+# Some hosts ship only docker-compose v1.29 (no v2 plugin); use the
+# hyphenated `docker-compose` there. The top-level `name:` key is v2-only
+# and `services:` needs an explicit `version:` on v1, so we keep a
+# `version:` key + -p instead of `name:` to stay valid on both engines.
+# (v2 prints a harmless "version is obsolete" warning.)
+#
+# Per-host bind paths come from .env (compose substitutes ${VAR}):
+#   LIBRESRS_DATA_DIR  — host dir bind-mounted at /app/data (the SQLite
+#                        database lives here; it MUST survive rebuilds).
+#                        Default ./data/libresrs, next to this file.
+# valkey holds only the sessions, with no volume: nothing is lost but
+# sign-ins. Recreating the valkey container (for example after rebuilding
+# it) signs everyone out, so deploys recreate the app alone.
+#
+# Containers log with Docker's default driver. Host-specific settings, such
+# as shipping logs to a GELF endpoint, go in an untracked override passed
+# after this file, the same way on every command for the project:
+#
+#   docker compose -p libresrs-jonerix -f docker-compose.jonerix.yml \
+#     -f docker-compose.host.yml up -d --no-deps --no-build app
+#
+# (docker-compose.host.yml is git-ignored; any file name works with -f.
+# On docker-compose v1.29, give the override the same top-level
+# `version:` as this file.)
+
+version: "3.8"
+
+services:
+  valkey:
+    build:
+      context: .
+      dockerfile: Dockerfile.valkey.jonerix
+    image: libresrs-valkey-jonerix:latest
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.jonerix
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        GIT_TAG: ${GIT_TAG:-}
+        USE_VENDORED_ASSETS: ${USE_VENDORED_ASSETS:-false}
+    image: libresrs-app-jonerix:latest
+    ports:
+      - "6767:6767"
+    environment:
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - CLEVER_CLIENT_ID=${CLEVER_CLIENT_ID:-}
+      - CLEVER_CLIENT_SECRET=${CLEVER_CLIENT_SECRET:-}
+      - CLEVER_AUTH_DISABLED=${CLEVER_AUTH_DISABLED:-}
+      - SESSION_SECRET=${SESSION_SECRET:?SESSION_SECRET must be set to a strong random value}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-}
+      - DATABASE_URL=/app/data/flashcards.db
+      - REDIS_URL=redis://valkey:6379
+      - NODE_ENV=production
+      - AI_ENABLED=${AI_ENABLED:-false}
+      - AI_PROVIDER=${AI_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - AI_PRONUNCIATION_ENABLED=${AI_PRONUNCIATION_ENABLED:-true}
+      - AI_IMAGE_ENABLED=${AI_IMAGE_ENABLED:-true}
+      - AI_MNEMONIC_ENABLED=${AI_MNEMONIC_ENABLED:-true}
+      - AI_MNEMONIC_MODEL=${AI_MNEMONIC_MODEL:-gpt-5.2}
+      - AI_IMAGE_MODEL=${AI_IMAGE_MODEL:-gpt-image-1.5}
+      - AI_IMAGE_QUALITY=${AI_IMAGE_QUALITY:-low}
+      - PIN_AUTO_SCHOOL_IPS=${PIN_AUTO_SCHOOL_IPS:-}
+    volumes:
+      - ${LIBRESRS_DATA_DIR:-./data/libresrs}:/app/data
+    depends_on:
+      - valkey
+    restart: unless-stopped

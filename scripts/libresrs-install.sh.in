@@ -1,0 +1,271 @@
+#!/bin/sh
+
+set -eu
+
+DOWNLOAD_BASE_DEFAULT="__DOWNLOAD_BASE__"
+DOWNLOAD_BASE="${LIBRESRS_DOWNLOAD_BASE:-$DOWNLOAD_BASE_DEFAULT}"
+PREFIX="${LIBRESRS_PREFIX:-$HOME/.local/libresrs}"
+INSTALL_SERVICE=0
+
+usage() {
+  cat <<'EOF'
+libreSRS installer
+
+Usage:
+  sh -s -- [options]
+
+Options:
+  --prefix <path>   Install directory (default: ~/.local/libresrs)
+  --service         Install and start as a service
+  --help            Show this help text
+EOF
+}
+
+log() {
+  printf '[libresrs-install] %s\n' "$*"
+}
+
+fail() {
+  printf '[libresrs-install] ERROR: %s\n' "$*" >&2
+  exit 1
+}
+
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || fail "Missing required command: $1"
+}
+
+set_env_var() {
+  key="$1"
+  value="$2"
+  file="$3"
+  tmp_file="${file}.tmp"
+
+  awk -v key="$key" -v value="$value" '
+    BEGIN { updated = 0 }
+    $0 ~ ("^" key "=") {
+      if (!updated) {
+        print key "=" value
+        updated = 1
+      }
+      next
+    }
+    { print }
+    END {
+      if (!updated) {
+        print key "=" value
+      }
+    }
+  ' "$file" > "$tmp_file"
+
+  mv "$tmp_file" "$file"
+}
+
+install_linux_service() {
+  node_bin="$1"
+
+  if ! command -v systemctl >/dev/null 2>&1; then
+    fail "systemctl not found. Re-run without --service, or install systemd."
+  fi
+
+  if [ "$(id -u)" -eq 0 ]; then
+    unit_file="/etc/systemd/system/libresrs.service"
+    cat > "$unit_file" <<EOF
+[Unit]
+Description=libreSRS
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=$PREFIX
+EnvironmentFile=$PREFIX/.env
+ExecStart=$node_bin $PREFIX/packages/server/dist/index.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    systemctl daemon-reload
+    systemctl enable --now libresrs.service
+    log "Installed systemd service: libresrs.service"
+    return
+  fi
+
+  unit_file="$HOME/.config/systemd/user/libresrs.service"
+  mkdir -p "$(dirname "$unit_file")"
+  cat > "$unit_file" <<EOF
+[Unit]
+Description=libreSRS
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=$PREFIX
+EnvironmentFile=$PREFIX/.env
+ExecStart=$node_bin $PREFIX/packages/server/dist/index.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+EOF
+
+  systemctl --user daemon-reload
+  systemctl --user enable --now libresrs.service
+  log "Installed user systemd service: libresrs.service"
+  log "To keep user services alive at boot, run: sudo loginctl enable-linger $USER"
+}
+
+install_macos_service() {
+  node_bin="$1"
+  plist_file="$HOME/Library/LaunchAgents/org.libresrs.server.plist"
+  log_dir="$PREFIX/log"
+  start_cmd="cd \"$PREFIX\" && set -a && . \"$PREFIX/.env\" && set +a && exec \"$node_bin\" packages/server/dist/index.js"
+
+  mkdir -p "$(dirname "$plist_file")" "$log_dir"
+  cat > "$plist_file" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>org.libresrs.server</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/bin/sh</string>
+      <string>-c</string>
+      <string>$start_cmd</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>WorkingDirectory</key>
+    <string>$PREFIX</string>
+    <key>StandardOutPath</key>
+    <string>$log_dir/stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>$log_dir/stderr.log</string>
+  </dict>
+</plist>
+EOF
+
+  launchctl unload "$plist_file" >/dev/null 2>&1 || true
+  launchctl load -w "$plist_file"
+  log "Installed launchd service: org.libresrs.server"
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --prefix)
+      [ "$#" -ge 2 ] || fail "--prefix requires a value"
+      PREFIX="$2"
+      shift 2
+      ;;
+    --service)
+      INSTALL_SERVICE=1
+      shift
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      fail "Unknown argument: $1"
+      ;;
+  esac
+done
+
+if [ "$DOWNLOAD_BASE_DEFAULT" = "__DOWNLOAD_BASE__" ] && [ -z "${LIBRESRS_DOWNLOAD_BASE:-}" ]; then
+  fail "Installer download URL is not configured."
+fi
+
+require_cmd curl
+require_cmd tar
+require_cmd node
+require_cmd npm
+
+TMP_DIR=""
+TMP_DIR="$(mktemp -d)"
+trap '[ -n "$TMP_DIR" ] && rm -rf "$TMP_DIR"' 0 INT TERM HUP
+
+RUNTIME_ARCHIVE="$TMP_DIR/libresrs-runtime.tar.gz"
+RUNTIME_CHECKSUM="$TMP_DIR/libresrs-runtime.sha256"
+EXTRACT_DIR="$TMP_DIR/extracted"
+
+log "Downloading runtime bundle..."
+if ! curl -fsSL "$DOWNLOAD_BASE/libresrs-runtime.tar.gz" -o "$RUNTIME_ARCHIVE"; then
+  fail "Runtime bundle not found at: $DOWNLOAD_BASE/libresrs-runtime.tar.gz"
+fi
+if ! curl -fsSL "$DOWNLOAD_BASE/libresrs-runtime.sha256" -o "$RUNTIME_CHECKSUM"; then
+  fail "Runtime checksum not found at: $DOWNLOAD_BASE/libresrs-runtime.sha256"
+fi
+
+log "Verifying checksum..."
+expected="$(awk '{ print $1 }' "$RUNTIME_CHECKSUM" | tr -d '\r')"
+if command -v sha256sum >/dev/null 2>&1; then
+  actual="$(sha256sum "$RUNTIME_ARCHIVE" | awk '{ print $1 }')"
+elif command -v shasum >/dev/null 2>&1; then
+  actual="$(shasum -a 256 "$RUNTIME_ARCHIVE" | awk '{ print $1 }')"
+else
+  fail "No SHA-256 tool found (need sha256sum or shasum)"
+fi
+[ "$expected" = "$actual" ] || fail "Checksum verification failed"
+
+mkdir -p "$EXTRACT_DIR"
+tar -xzf "$RUNTIME_ARCHIVE" -C "$EXTRACT_DIR"
+[ -d "$EXTRACT_DIR/libresrs" ] || fail "Runtime archive layout is invalid"
+
+log "Installing files to $PREFIX..."
+mkdir -p "$PREFIX"
+cp -R "$EXTRACT_DIR/libresrs/." "$PREFIX/"
+
+if [ ! -f "$PREFIX/.env" ]; then
+  cp "$PREFIX/.env.example" "$PREFIX/.env"
+fi
+
+set_env_var "NODE_ENV" "production" "$PREFIX/.env"
+set_env_var "PORT" "6767" "$PREFIX/.env"
+set_env_var "REDIS_URL" "redis://127.0.0.1:6379" "$PREFIX/.env"
+
+session_secret_value="$(awk -F= '/^SESSION_SECRET=/{ value=substr($0, length($1) + 2) } END { print value }' "$PREFIX/.env")"
+case "$session_secret_value" in
+  ""|"change-me-in-production"|"dev-secret-change-in-production"|"change-me"|"CHANGE_ME_TO_A_SECURE_RANDOM_STRING"|"changeme"|"default-secret"|"replace-me"|"your-secret-key"|"your-session-secret")
+    session_secret="$(node -e "console.log(require('crypto').randomBytes(24).toString('hex'))")"
+    set_env_var "SESSION_SECRET" "$session_secret" "$PREFIX/.env"
+    ;;
+esac
+
+log "Installing production dependencies (shared)..."
+npm install --omit=dev --no-audit --no-fund --prefix "$PREFIX/packages/shared"
+
+log "Installing production dependencies (server)..."
+npm install --omit=dev --no-audit --no-fund --prefix "$PREFIX/packages/server"
+
+log "Install complete."
+log "Edit $PREFIX/.env to set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET."
+log "Ensure Redis is running at REDIS_URL before starting libreSRS."
+
+if [ "$INSTALL_SERVICE" -eq 1 ]; then
+  os_name="$(uname -s)"
+  node_bin="$(command -v node)"
+  case "$os_name" in
+    Linux)
+      install_linux_service "$node_bin"
+      ;;
+    Darwin)
+      install_macos_service "$node_bin"
+      ;;
+    *)
+      fail "Unsupported OS for --service: $os_name"
+      ;;
+  esac
+else
+  cat <<EOF
+Manual start command:
+  cd "$PREFIX"
+  set -a && . .env && set +a
+  node packages/server/dist/index.js
+EOF
+fi

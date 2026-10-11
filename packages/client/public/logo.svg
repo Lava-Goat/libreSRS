@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="libreSRS">
+  <!-- The forgetting curve bent upward: each well-timed review lifts memory higher. Indigo and gold (2026-10-10). -->
+  <rect x="16" y="16" width="224" height="224" rx="56" fill="#312e81"/>
+  <path fill="#fbbf24" d="M40 200 V148 Q46 182 76 184 V108 Q86 150 132 152 V60 Q147 106 216 108 V200 Z"/>
+</svg>
